@@ -32,6 +32,10 @@ symbol = Lexer.symbol spaceConsumer
 comma :: Parser ()
 comma = void $ symbol ","
 
+-- | Semicolon lexeme parser.
+semi :: Parser ()
+semi = void $ symbol ";"
+
 -- | Produces a parser for the contents between parentheses.
 parens :: Parser a -> Parser a
 parens = between (symbol "(") (symbol ")")

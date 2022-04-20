@@ -42,9 +42,9 @@ data Formula
   | -- | Equivalence.
     FIff Formula Formula
   | -- | Univerally quantified propositional formula. Takes a variable binding and a scope.
-    FForAll String Formula
+    FForAll Var Formula
   | -- | Existentially quantified propositional formula. Takes a variable binding and a scope.
-    FExists String Formula
+    FExists Var Formula
   deriving (Eq, Ord, Show)
 
 -- | A first-order term which is intended to denote an "object" in the domain
@@ -52,5 +52,6 @@ data Formula
 -- and constants using functions.
 data Term
   = TVar Var
+  | TObj ObjConst
   | TFn FnConst [Term]
   deriving (Eq, Ord, Show)
