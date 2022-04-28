@@ -10,6 +10,9 @@ import Text.Megaparsec (Parsec, optional, parse, sepBy, some, try, (<?>), (<|>))
 
 type Parser = Parsec Void String
 
+-- | Temporary function for running the formula parser and unwrapping the
+-- successful result.
+parse' :: String -> Formula
 parse' s = case parse formulaP "" s of
   Left _ -> undefined
   Right f -> f

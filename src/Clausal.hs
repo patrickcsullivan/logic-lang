@@ -1,17 +1,15 @@
-{-# LANGUAGE BangPatterns #-}
-
-module Clausal where
-
--- ( Literal (..),
---   fromFormula,
--- )
+module Clausal
+  ( Literal (..),
+    clausal,
+  )
+where
 
 import Ast (FnConst (..), Formula (..), ObjConst (..), RltnConst (..), Term (..), Var (..))
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Debug.Trace (trace, traceId, traceShow, traceShowId)
 
 -- -----------------------------------------------------------------------------
+-- REMOVE IMPLICATIONS AND EQUIVALENCES
 
 -- | A propositional formula without implication or equivalence connectives.
 data ImpIffsRemoved
@@ -43,6 +41,7 @@ removeImpIffs fo = case fo of
   FExists x p -> IExists x (removeImpIffs p)
 
 -- -----------------------------------------------------------------------------
+-- PUSH NEGATIONS IN AND CANCEL THEM OUT
 
 -- | A propsitional formula where negations have been pushed down and canceled
 -- out such that the only negations in the formula are the ones on negative
@@ -79,141 +78,7 @@ negsIn fo = case fo of
   IExists x p -> NExists x (negsIn p)
 
 -- -----------------------------------------------------------------------------
-
-sTest1 = "exists Y. X < Y ==> forall U. exists V. X * U < Y * V"
-
-skol =
-  [ [ LNeg
-        (RltnConst {rltnConstName = "<", rltnConstArity = 2})
-        [ TVar (Var {varName = "X"}),
-          TFn (FnConst {fnConstName = "f_Y", fnConstArity = 1}) [TVar (Var {varName = "X"})]
-        ],
-      LPos
-        (RltnConst {rltnConstName = "<", rltnConstArity = 2})
-        [ TFn (FnConst {fnConstName = "*", fnConstArity = 2}) [TVar (Var {varName = "X"}), TVar (Var {varName = "U"})],
-          TFn (FnConst {fnConstName = "*", fnConstArity = 2}) [TFn (FnConst {fnConstName = "f_Y", fnConstArity = 1}) [TVar (Var {varName = "X"})], TFn (FnConst {fnConstName = "f_V", fnConstArity = 2}) [TVar (Var {varName = "U"}), TVar (Var {varName = "X"})]]
-        ]
-    ]
-  ]
-
-fRslt =
-  FExists
-    (Var {varName = "Y"})
-    ( FImp
-        ( FAtom
-            (RltnConst {rltnConstName = "<", rltnConstArity = 2})
-            [ TVar (Var {varName = "X"}),
-              TVar (Var {varName = "Y"})
-            ]
-        )
-        ( FForAll
-            (Var {varName = "U"})
-            ( FExists
-                (Var {varName = "V"})
-                ( FAtom
-                    (RltnConst {rltnConstName = "<", rltnConstArity = 2})
-                    [ TFn
-                        (FnConst {fnConstName = "*", fnConstArity = 2})
-                        [ TVar (Var {varName = "X"}),
-                          TVar (Var {varName = "U"})
-                        ],
-                      TFn
-                        (FnConst {fnConstName = "*", fnConstArity = 2})
-                        [ TVar (Var {varName = "Y"}),
-                          TVar (Var {varName = "V"})
-                        ]
-                    ]
-                )
-            )
-        )
-    )
-
-riiRslt =
-  IExists
-    (Var {varName = "Y"})
-    ( IOr
-        ( INot
-            ( IAtom
-                (RltnConst {rltnConstName = "<", rltnConstArity = 2})
-                [ TVar (Var {varName = "X"}),
-                  TVar (Var {varName = "Y"})
-                ]
-            )
-        )
-        ( IForAll
-            (Var {varName = "U"})
-            ( IExists
-                (Var {varName = "V"})
-                ( IAtom
-                    (RltnConst {rltnConstName = "<", rltnConstArity = 2})
-                    [ TFn
-                        (FnConst {fnConstName = "*", fnConstArity = 2})
-                        [ TVar (Var {varName = "X"}),
-                          TVar (Var {varName = "U"})
-                        ],
-                      TFn
-                        (FnConst {fnConstName = "*", fnConstArity = 2})
-                        [ TVar (Var {varName = "Y"}),
-                          TVar (Var {varName = "V"})
-                        ]
-                    ]
-                )
-            )
-        )
-    )
-
-niRslt =
-  NExists
-    (Var {varName = "Y"})
-    ( NOr
-        ( NNegLit
-            (RltnConst {rltnConstName = "<", rltnConstArity = 2})
-            [ TVar (Var {varName = "X"}),
-              TVar (Var {varName = "Y"})
-            ]
-        )
-        ( NForAll
-            (Var {varName = "U"})
-            ( NExists
-                (Var {varName = "V"})
-                ( NPosLit
-                    (RltnConst {rltnConstName = "<", rltnConstArity = 2})
-                    [ TFn (FnConst {fnConstName = "*", fnConstArity = 2}) [TVar (Var {varName = "X"}), TVar (Var {varName = "U"})],
-                      TFn (FnConst {fnConstName = "*", fnConstArity = 2}) [TVar (Var {varName = "Y"}), TVar (Var {varName = "V"})]
-                    ]
-                )
-            )
-        )
-    )
-
-reRslt =
-  EOr
-    (ENegLit (RltnConst {rltnConstName = "<", rltnConstArity = 2}) [TVar (Var {varName = "X"}), TFn (FnConst {fnConstName = "f_Y", fnConstArity = 1}) [TVar (Var {varName = "X"})]])
-    ( EForAll
-        (Var {varName = "U"})
-        ( EPosLit
-            (RltnConst {rltnConstName = "<", rltnConstArity = 2})
-            [ TFn (FnConst {fnConstName = "*", fnConstArity = 2}) [TVar (Var {varName = "X"}), TVar (Var {varName = "U"})],
-              TFn
-                (FnConst {fnConstName = "*", fnConstArity = 2})
-                [ TFn
-                    (FnConst {fnConstName = "f_Y", fnConstArity = 1})
-                    [TVar (Var {varName = "X"})],
-                  TFn
-                    (FnConst {fnConstName = "f_V", fnConstArity = 2})
-                    [ TVar (Var {varName = "U"}),
-                      TVar (Var {varName = "X"})
-                    ]
-                ]
-            ]
-        )
-    )
-
-nTest1 = NExists (Var "X") (NPosLit (RltnConst "p" 1) [TVar (Var "X")])
-
-nTest2 = NExists (Var "X") (NPosLit (RltnConst "p" 1) [TFn (FnConst "f" 1) [TVar (Var "X")]])
-
-nTest3 = NExists (Var "X") (NPosLit (RltnConst "p" 1) [TFn (FnConst "f" 2) [TVar (Var "X"), TVar (Var "Y")]])
+-- REMOVE EXISTENTIAL QUANTIFICATIONS (SKOLEMIZE)
 
 -- | A propsitional formula where existential quantifiers have been removed and
 -- existentially quantified variables have been replaces with Skolem constants
@@ -250,7 +115,7 @@ removeExs avoid fo = case fo of
   NForAll x p ->
     let (avoid', p') = removeExs avoid p
      in (avoid', EForAll x p')
-  NExists !x !p ->
+  NExists x p ->
     if Set.null free
       then
         let name = variant ("c_" ++ varName x) avoid
@@ -266,10 +131,6 @@ removeExs avoid fo = case fo of
          in removeExs avoid' fo'
     where
       free = freeVars fo
-
-traceLabel label a =
-  let msg = "\n-----------------\n" ++ label ++ ": \n" ++ show a ++ "\n"
-   in trace msg a
 
 -- | Return the set free domain variables in the formula.
 freeVars :: NegsIn -> Set Var
@@ -361,6 +222,7 @@ variant s avoid =
     else s
 
 -- -----------------------------------------------------------------------------
+-- REMOVE UNIVERSAL QUANTIFICATIONS
 
 -- | A propsitional formula where universal quantifiers have been removed.
 data UniversalsRemoved
@@ -383,6 +245,7 @@ removeUniversals fo = case fo of
   EForAll x p -> removeUniversals p
 
 -- -----------------------------------------------------------------------------
+-- DISTRIBUTE DISJUNCTIONS TO PUT FORMULA IN CNF
 
 -- A formula in conjunction normal form where the top of the formula is a
 -- multi-element conjunction and each conjunct is a multi-element disjunction.
@@ -443,21 +306,9 @@ distributeLeftDisj p qLeft qRight =
           CAnd rLeft rRight -> distributeLeftDisj p rLeft rRight
    in CAnd left right
 
--- -- | Distributes disjunction with the left formula p over the conjuncts in q.
--- --
--- -- p or (q1 and ... and qn) -> (p or q1) and ... (p or qn)
--- distributeLeftDisj' :: CnfDisjunction -> CnfConjunction -> CnfConjunction -> CnfConjunction
--- distributeLeftDisj' p qLeft qRight =
---   let left =
---         case qLeft of
---           CDisj qLeftD -> CDisj (COr p qLeftD)
---           CAnd rLeft rRight -> distributeLeftDisj' p rLeft rRight
---       right =
---         case qRight of
---           CDisj qRightD -> CDisj (COr p qRightD)
---           CAnd rLeft rRight -> distributeLeftDisj' p rLeft rRight
---    in CAnd left right
-
+-- | Distributes disjunction with the right formula q over the conjuncts in p.
+--
+-- (p1 and ... and pn) or q -> (p1 or q) and ... (pn or q)
 distributeRightDisj' :: CnfConjunction -> CnfConjunction -> CnfDisjunction -> CnfConjunction
 distributeRightDisj' pLeft pRight q =
   let left =
@@ -471,12 +322,7 @@ distributeRightDisj' pLeft pRight q =
    in CAnd left right
 
 -- -----------------------------------------------------------------------------
-
--- -- | A clause that represents a disjunction of literals.
--- newtype Clause = Clause
---   { unClause :: [Literal]
---   }
---   deriving (Eq, Show)
+-- REMOVE OPERATORS TO CREATE CLAUSES
 
 data Literal
   = -- | Positive literal.
@@ -487,7 +333,7 @@ data Literal
 
 removeOperators :: CnfConjunction -> [[Literal]]
 removeOperators conj = case conj of
-  CAnd p q -> (removeOperators p) ++ (removeOperators q)
+  CAnd p q -> removeOperators p ++ removeOperators q
   CDisj disj ->
     case removeOrs disj of
       Just clause -> [clause]
@@ -506,4 +352,12 @@ removeOrs disj = case disj of
 
 -- -----------------------------------------------------------------------------
 
-fromFormula = removeOperators . distributeDisjunctions . removeUniversals . removeExistentials . negsIn . removeImpIffs
+-- | Transform the propositional formula into its clausal form.
+clausal :: Formula -> [[Literal]]
+clausal =
+  removeOperators
+    . distributeDisjunctions
+    . removeUniversals
+    . removeExistentials
+    . negsIn
+    . removeImpIffs
