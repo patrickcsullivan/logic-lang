@@ -1,4 +1,4 @@
-module Parser where
+module Parser (formulaP, parse') where
 
 import Ast (FnConst (..), Formula (..), ObjConst (..), RltnConst (..), Term (..), Var (..))
 import Control.Applicative (liftA2, liftA3)

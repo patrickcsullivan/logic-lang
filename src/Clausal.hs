@@ -183,24 +183,30 @@ substQ ::
   NegsIn ->
   NegsIn
 substQ targetVar subTrm mkQuant x p =
-  let free = x `Set.delete` freeVars p
-      -- Determine if substituting the new term in for the target variable would
-      -- introduce a term that contains the bound variable.
-      isClash = (targetVar `Set.member` free) && (x `Set.member` termVars subTrm)
-      -- Come up with a new name for the bound variable that doesn't clash with
-      -- any free variables in the quantifer scope or any variables in the new
-      -- term.
-      x' =
-        if isClash
-          then
-            let avoidVars = free `Set.union` termVars subTrm
-             in Var $ variant (varName x) (Set.map varName avoidVars)
-          else x
-      -- Replace any instances of the bound variable x to x' before substituting
-      -- in the new term for the target variable.
-      p' = subst x (TVar x') p
-      p'' = subst targetVar subTrm p
-   in mkQuant x' p''
+  -- If the target variable is not a free variable in the quntifiers scope, so
+  -- the substitution does nothing.
+  if targetVar `Set.member` free
+    then
+      let -- Determine if substituting the new term in for the target variable
+          -- would introduce a term that contains the bound variable.
+          isClash = (x `Set.member` termVars subTrm)
+          -- Come up with a new name for the bound variable that doesn't clash
+          -- with any free variables in the quantifer scope or any variables in
+          -- the new term.
+          x' =
+            if isClash
+              then
+                let avoidVars = free `Set.union` termVars subTrm
+                 in Var $ variant (varName x) (Set.map varName avoidVars)
+              else x
+          -- Replace any instances of the bound variable x to x' before
+          -- substituting in the new term for the target variable.
+          p' = subst x (TVar x') p
+          p'' = subst targetVar subTrm p
+       in mkQuant x' p''
+    else mkQuant x p
+  where
+    free = x `Set.delete` freeVars p
 
 -- | Substitute the given term for the specified free variable in the term.
 termSubst :: Var -> Term -> Term -> Term
