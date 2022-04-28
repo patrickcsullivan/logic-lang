@@ -1,3 +1,3 @@
-# Changelog for parser-test
+# Changelog for logic-lang
 
 ## Unreleased changes
