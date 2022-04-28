@@ -1,12 +1,15 @@
-module Clausal
-  ( Literal (..),
-    fromFormula,
-  )
-where
+{-# LANGUAGE BangPatterns #-}
+
+module Clausal where
+
+-- ( Literal (..),
+--   fromFormula,
+-- )
 
 import Ast (FnConst (..), Formula (..), ObjConst (..), RltnConst (..), Term (..), Var (..))
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Debug.Trace (trace, traceId, traceShow, traceShowId)
 
 -- -----------------------------------------------------------------------------
 
@@ -77,6 +80,141 @@ negsIn fo = case fo of
 
 -- -----------------------------------------------------------------------------
 
+sTest1 = "exists Y. X < Y ==> forall U. exists V. X * U < Y * V"
+
+skol =
+  [ [ LNeg
+        (RltnConst {rltnConstName = "<", rltnConstArity = 2})
+        [ TVar (Var {varName = "X"}),
+          TFn (FnConst {fnConstName = "f_Y", fnConstArity = 1}) [TVar (Var {varName = "X"})]
+        ],
+      LPos
+        (RltnConst {rltnConstName = "<", rltnConstArity = 2})
+        [ TFn (FnConst {fnConstName = "*", fnConstArity = 2}) [TVar (Var {varName = "X"}), TVar (Var {varName = "U"})],
+          TFn (FnConst {fnConstName = "*", fnConstArity = 2}) [TFn (FnConst {fnConstName = "f_Y", fnConstArity = 1}) [TVar (Var {varName = "X"})], TFn (FnConst {fnConstName = "f_V", fnConstArity = 2}) [TVar (Var {varName = "U"}), TVar (Var {varName = "X"})]]
+        ]
+    ]
+  ]
+
+fRslt =
+  FExists
+    (Var {varName = "Y"})
+    ( FImp
+        ( FAtom
+            (RltnConst {rltnConstName = "<", rltnConstArity = 2})
+            [ TVar (Var {varName = "X"}),
+              TVar (Var {varName = "Y"})
+            ]
+        )
+        ( FForAll
+            (Var {varName = "U"})
+            ( FExists
+                (Var {varName = "V"})
+                ( FAtom
+                    (RltnConst {rltnConstName = "<", rltnConstArity = 2})
+                    [ TFn
+                        (FnConst {fnConstName = "*", fnConstArity = 2})
+                        [ TVar (Var {varName = "X"}),
+                          TVar (Var {varName = "U"})
+                        ],
+                      TFn
+                        (FnConst {fnConstName = "*", fnConstArity = 2})
+                        [ TVar (Var {varName = "Y"}),
+                          TVar (Var {varName = "V"})
+                        ]
+                    ]
+                )
+            )
+        )
+    )
+
+riiRslt =
+  IExists
+    (Var {varName = "Y"})
+    ( IOr
+        ( INot
+            ( IAtom
+                (RltnConst {rltnConstName = "<", rltnConstArity = 2})
+                [ TVar (Var {varName = "X"}),
+                  TVar (Var {varName = "Y"})
+                ]
+            )
+        )
+        ( IForAll
+            (Var {varName = "U"})
+            ( IExists
+                (Var {varName = "V"})
+                ( IAtom
+                    (RltnConst {rltnConstName = "<", rltnConstArity = 2})
+                    [ TFn
+                        (FnConst {fnConstName = "*", fnConstArity = 2})
+                        [ TVar (Var {varName = "X"}),
+                          TVar (Var {varName = "U"})
+                        ],
+                      TFn
+                        (FnConst {fnConstName = "*", fnConstArity = 2})
+                        [ TVar (Var {varName = "Y"}),
+                          TVar (Var {varName = "V"})
+                        ]
+                    ]
+                )
+            )
+        )
+    )
+
+niRslt =
+  NExists
+    (Var {varName = "Y"})
+    ( NOr
+        ( NNegLit
+            (RltnConst {rltnConstName = "<", rltnConstArity = 2})
+            [ TVar (Var {varName = "X"}),
+              TVar (Var {varName = "Y"})
+            ]
+        )
+        ( NForAll
+            (Var {varName = "U"})
+            ( NExists
+                (Var {varName = "V"})
+                ( NPosLit
+                    (RltnConst {rltnConstName = "<", rltnConstArity = 2})
+                    [ TFn (FnConst {fnConstName = "*", fnConstArity = 2}) [TVar (Var {varName = "X"}), TVar (Var {varName = "U"})],
+                      TFn (FnConst {fnConstName = "*", fnConstArity = 2}) [TVar (Var {varName = "Y"}), TVar (Var {varName = "V"})]
+                    ]
+                )
+            )
+        )
+    )
+
+reRslt =
+  EOr
+    (ENegLit (RltnConst {rltnConstName = "<", rltnConstArity = 2}) [TVar (Var {varName = "X"}), TFn (FnConst {fnConstName = "f_Y", fnConstArity = 1}) [TVar (Var {varName = "X"})]])
+    ( EForAll
+        (Var {varName = "U"})
+        ( EPosLit
+            (RltnConst {rltnConstName = "<", rltnConstArity = 2})
+            [ TFn (FnConst {fnConstName = "*", fnConstArity = 2}) [TVar (Var {varName = "X"}), TVar (Var {varName = "U"})],
+              TFn
+                (FnConst {fnConstName = "*", fnConstArity = 2})
+                [ TFn
+                    (FnConst {fnConstName = "f_Y", fnConstArity = 1})
+                    [TVar (Var {varName = "X"})],
+                  TFn
+                    (FnConst {fnConstName = "f_V", fnConstArity = 2})
+                    [ TVar (Var {varName = "U"}),
+                      TVar (Var {varName = "X"})
+                    ]
+                ]
+            ]
+        )
+    )
+
+nTest1 = NExists (Var "X") (NPosLit (RltnConst "p" 1) [TVar (Var "X")])
+
+nTest2 = NExists (Var "X") (NPosLit (RltnConst "p" 1) [TFn (FnConst "f" 1) [TVar (Var "X")]])
+
+nTest3 = NExists (Var "X") (NPosLit (RltnConst "p" 1) [TFn (FnConst "f" 2) [TVar (Var "X"), TVar (Var "Y")]])
+
 -- | A propsitional formula where existential quantifiers have been removed and
 -- existentially quantified variables have been replaces with Skolem constants
 -- and Skolem functions.
@@ -112,22 +250,26 @@ removeExs avoid fo = case fo of
   NForAll x p ->
     let (avoid', p') = removeExs avoid p
      in (avoid', EForAll x p')
-  NExists x p ->
+  NExists !x !p ->
     if Set.null free
       then
         let name = variant ("c_" ++ varName x) avoid
             skolemObj = TObj (ObjConst name)
             avoid' = name `Set.insert` avoid
-            fo' = subst x skolemObj fo
+            fo' = subst x skolemObj p
          in removeExs avoid' fo'
       else
         let name = variant ("f_" ++ varName x) avoid
             skolemFn = TFn (FnConst name (Set.size free)) (TVar <$> Set.toAscList free)
             avoid' = name `Set.insert` avoid
-            fo' = subst x skolemFn fo
+            fo' = subst x skolemFn p
          in removeExs avoid' fo'
     where
       free = freeVars fo
+
+traceLabel label a =
+  let msg = "\n-----------------\n" ++ label ++ ": \n" ++ show a ++ "\n"
+   in trace msg a
 
 -- | Return the set free domain variables in the formula.
 freeVars :: NegsIn -> Set Var
@@ -152,15 +294,15 @@ termVars trm = case trm of
 -- Bound varibles in the formula are renamed as needed to avoid clashing with
 -- variables in the substituted terms.
 subst :: Var -> Term -> NegsIn -> NegsIn
-subst x sub fo = case fo of
+subst targetVar sub fo = case fo of
   NFalse -> NFalse
   NTrue -> NTrue
-  NPosLit rltnConst args -> NPosLit rltnConst (termSubst x sub <$> args)
-  NNegLit rltnConst args -> NNegLit rltnConst (termSubst x sub <$> args)
-  NAnd p q -> NAnd (subst x sub p) (subst x sub q)
-  NOr p q -> NOr (subst x sub p) (subst x sub q)
-  NForAll x p -> substQ x sub NForAll x p
-  NExists x p -> substQ x sub NExists x p
+  NPosLit rltnConst args -> NPosLit rltnConst (termSubst targetVar sub <$> args)
+  NNegLit rltnConst args -> NNegLit rltnConst (termSubst targetVar sub <$> args)
+  NAnd p q -> NAnd (subst targetVar sub p) (subst targetVar sub q)
+  NOr p q -> NOr (subst targetVar sub p) (subst targetVar sub q)
+  NForAll x p -> substQ targetVar sub NForAll x p
+  NExists x p -> substQ targetVar sub NExists x p
 
 -- | Substitutes the given term for the specified free variable in the
 -- quantified formula. The variable binding is renamed as needed to avoid
@@ -364,5 +506,4 @@ removeOrs disj = case disj of
 
 -- -----------------------------------------------------------------------------
 
-fromFormula :: Formula -> [[Literal]]
 fromFormula = removeOperators . distributeDisjunctions . removeUniversals . removeExistentials . negsIn . removeImpIffs

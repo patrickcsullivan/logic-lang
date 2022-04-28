@@ -6,9 +6,13 @@ import Control.Monad.Combinators.Expr (Operator (InfixL, InfixR, Prefix), makeEx
 import Data.Maybe (fromMaybe)
 import Data.Void (Void)
 import qualified Scanner
-import Text.Megaparsec (Parsec, optional, sepBy, some, try, (<?>), (<|>))
+import Text.Megaparsec (Parsec, optional, parse, sepBy, some, try, (<?>), (<|>))
 
 type Parser = Parsec Void String
+
+parse' s = case parse formulaP "" s of
+  Left _ -> undefined
+  Right f -> f
 
 formulaP :: Parser Formula
 formulaP = makeExprParser formulaCaseP formulaOperators
@@ -29,7 +33,8 @@ formulaCaseP =
     <|> try (FTrue <$ Scanner.reservedWord "True")
     <|> forAllP
     <|> existsP
-    <|> atomP
+    <|> try prefixRltnP
+    <|> infixRltnP
 
 trueP :: Parser Formula
 trueP = FTrue <$ Scanner.reservedWord "True"
@@ -37,11 +42,18 @@ trueP = FTrue <$ Scanner.reservedWord "True"
 falseP :: Parser Formula
 falseP = FFalse <$ Scanner.reservedWord "False"
 
-atomP :: Parser Formula
-atomP = do
+prefixRltnP :: Parser Formula
+prefixRltnP = do
   name <- Scanner.rltnConstIdentifier
   args <- Scanner.parens (termP `sepBy` Scanner.comma)
   return $ FAtom (RltnConst name (length args)) args
+
+infixRltnP :: Parser Formula
+infixRltnP = do
+  left <- termP
+  name <- Scanner.rltnConstOperator
+  right <- termP
+  return $ FAtom (RltnConst name 2) [left, right]
 
 forAllP :: Parser Formula
 forAllP = do

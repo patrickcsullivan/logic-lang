@@ -3,7 +3,7 @@ module Scanner where
 import Control.Monad (void)
 import Data.Char ()
 import Data.Void (Void)
-import Text.Megaparsec (Parsec, between, many, notFollowedBy, single, try, (<|>))
+import Text.Megaparsec (Parsec, between, many, notFollowedBy, oneOf, single, some, try, (<|>))
 import Text.Megaparsec.Char (alphaNumChar, letterChar, lowerChar, numberChar, space1, string, upperChar)
 import qualified Text.Megaparsec.Char.Lexer as Lexer
 
@@ -72,6 +72,9 @@ rltnConstIdentifier = (lexeme . try) $ do
   if word `elem` reservedWords
     then fail $ "keyword " <> show word <> " cannot be a relation constant"
     else return word
+
+rltnConstOperator :: Parser String
+rltnConstOperator = (lexeme . try) $ some (oneOf "!#$%&*+./<=>?@\\^|-~")
 
 fnObjConstIdentifier :: Parser String
 fnObjConstIdentifier = (lexeme . try) $ do
