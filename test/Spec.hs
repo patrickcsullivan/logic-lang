@@ -1,18 +1,22 @@
-import Ast (FnConst (..), Formula (..), ObjConst (..), RltnConst (..), Term (..), Var (..))
-import Clausal (Literal (..), clausal)
 import Control.Exception (evaluate)
-import Ground (groundTerms)
+import Ground (groundTermPermutations, groundTerms)
 import qualified Ground
 import Parser (parse')
+import Syntax.Clausal (Literal (..), clausal)
+import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
+import Syntax.Formula (Formula (..))
+import Syntax.Term (Term (..))
+import Syntax.Variable (Var (..))
 import Test.Hspec (context, describe, hspec, it, pending, shouldBe)
 
 main :: IO ()
 main = hspec $ do
-  parserSpec
+  formulaPSpec
   clausalSpec
-  groundSpec
+  groundTermsSpec
+  groundTermPermutationsSpec
 
-parserSpec =
+formulaPSpec =
   describe "Parser.formulaP" $ do
     it "works" $ do
       pending
@@ -55,7 +59,7 @@ clausalSpec =
             ]
       clausal (parse' fo3) `shouldBe` expected
 
-groundSpec =
+groundTermsSpec =
   describe "Ground.groundTerms" $ do
     let c = ObjConst "c"
     let d = ObjConst "d"
@@ -107,4 +111,22 @@ groundSpec =
                      TFn (FnConst {fnConstName = "g", fnConstArity = 2}) [TFn (FnConst {fnConstName = "g", fnConstArity = 2}) [TObj (ObjConst {objConstName = "d"}), TObj (ObjConst {objConstName = "c"})], TObj (ObjConst {objConstName = "d"})],
                      TFn (FnConst {fnConstName = "g", fnConstArity = 2}) [TFn (FnConst {fnConstName = "g", fnConstArity = 2}) [TObj (ObjConst {objConstName = "d"}), TObj (ObjConst {objConstName = "d"})], TObj (ObjConst {objConstName = "c"})],
                      TFn (FnConst {fnConstName = "g", fnConstArity = 2}) [TFn (FnConst {fnConstName = "g", fnConstArity = 2}) [TObj (ObjConst {objConstName = "d"}), TObj (ObjConst {objConstName = "d"})], TObj (ObjConst {objConstName = "d"})]
+                   ]
+
+groundTermPermutationsSpec =
+  describe "Ground.groundTermPermutations" $ do
+    let c = ObjConst "c"
+    let d = ObjConst "d"
+    let f = FnConst "f" 1
+    it "generates permutations of length 2 for ground terms of depth 0" $ do
+      groundTermPermutations [c, d] [f] 2 0
+        `shouldBe` [ [TObj (ObjConst {objConstName = "c"}), TObj (ObjConst {objConstName = "c"})],
+                     [TObj (ObjConst {objConstName = "c"}), TObj (ObjConst {objConstName = "d"})],
+                     [TObj (ObjConst {objConstName = "d"}), TObj (ObjConst {objConstName = "c"})],
+                     [TObj (ObjConst {objConstName = "d"}), TObj (ObjConst {objConstName = "d"})]
+                   ]
+    it "generates permutations of length 1 for ground terms of depth 2" $ do
+      groundTermPermutations [c, d] [f] 1 2
+        `shouldBe` [ [TFn (FnConst {fnConstName = "f", fnConstArity = 1}) [TFn (FnConst {fnConstName = "f", fnConstArity = 1}) [TObj (ObjConst {objConstName = "c"})]]],
+                     [TFn (FnConst {fnConstName = "f", fnConstArity = 1}) [TFn (FnConst {fnConstName = "f", fnConstArity = 1}) [TObj (ObjConst {objConstName = "d"})]]]
                    ]

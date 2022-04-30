@@ -1,12 +1,37 @@
-module Clausal
+module Syntax.Clausal
   ( Literal (..),
     clausal,
   )
 where
 
-import Ast (FnConst (..), Formula (..), ObjConst (..), RltnConst (..), Term (..), Var (..))
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
+import Syntax.Formula (Formula (..))
+import Syntax.Term (Term (..))
+import Syntax.Variable (Var (..))
+
+-- | A relation or negated relation that is applied to term arguments.
+data Literal
+  = -- | Positive literal.
+    LPos RltnConst [Term]
+  | -- | Negative literal.
+    LNeg RltnConst [Term]
+  deriving (Eq, Show)
+
+-- | Transform the propositional formula into its clausal form. The clausal form
+-- is equisatisfiable with the original formula.
+--
+-- The returned value represents a conjunction of a list of "clauses" where each
+-- "clause" represents a disjunction of a list of literals.
+clausal :: Formula -> [[Literal]]
+clausal =
+  removeOperators
+    . distributeDisjunctions
+    . removeUniversals
+    . removeExistentials
+    . negsIn
+    . removeImpIffs
 
 -- -----------------------------------------------------------------------------
 -- REMOVE IMPLICATIONS AND EQUIVALENCES
@@ -330,13 +355,6 @@ distributeRightDisj' pLeft pRight q =
 -- -----------------------------------------------------------------------------
 -- REMOVE OPERATORS TO CREATE CLAUSES
 
-data Literal
-  = -- | Positive literal.
-    LPos RltnConst [Term]
-  | -- | Negative literal.
-    LNeg RltnConst [Term]
-  deriving (Eq, Show)
-
 removeOperators :: CnfConjunction -> [[Literal]]
 removeOperators conj = case conj of
   CAnd p q -> removeOperators p ++ removeOperators q
@@ -355,15 +373,3 @@ removeOrs disj = case disj of
     pDisjs <- removeOrs p
     qDisjs <- removeOrs q
     return $ pDisjs ++ qDisjs
-
--- -----------------------------------------------------------------------------
-
--- | Transform the propositional formula into its clausal form.
-clausal :: Formula -> [[Literal]]
-clausal =
-  removeOperators
-    . distributeDisjunctions
-    . removeUniversals
-    . removeExistentials
-    . negsIn
-    . removeImpIffs

@@ -4,9 +4,11 @@ module Ground
   )
 where
 
-import Ast (FnConst (..), Formula (..), ObjConst (..), RltnConst (..), Term (..), Var (..))
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
+import Syntax.Term (Term (..))
+import Syntax.Variable (Var (..))
 
 -- | Generate all ground terms involving "depth-`n`" functions.
 groundTerms :: [ObjConst] -> [FnConst] -> Int -> [Term]

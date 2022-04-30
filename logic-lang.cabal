@@ -25,11 +25,14 @@ source-repository head
 
 library
   exposed-modules:
-      Ast
-      Clausal
       Ground
       Parser
       Scanner
+      Syntax.Clausal
+      Syntax.Constant
+      Syntax.Formula
+      Syntax.Term
+      Syntax.Variable
       Unsat
   other-modules:
       Paths_logic_lang

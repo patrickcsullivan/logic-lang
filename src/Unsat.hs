@@ -1,6 +1,5 @@
 module Unsat where
 
-import Ast (Term, Var)
 import Data.Map as Map
 import Ground (groundTermPermutations)
 

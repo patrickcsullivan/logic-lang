@@ -1,11 +1,14 @@
 module Parser (formulaP, parse') where
 
-import Ast (FnConst (..), Formula (..), ObjConst (..), RltnConst (..), Term (..), Var (..))
 import Control.Applicative (liftA2, liftA3)
 import Control.Monad.Combinators.Expr (Operator (InfixL, InfixR, Prefix), makeExprParser)
 import Data.Maybe (fromMaybe)
 import Data.Void (Void)
 import qualified Scanner
+import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
+import Syntax.Formula (Formula (..))
+import Syntax.Term (Term (..))
+import Syntax.Variable (Var (..))
 import Text.Megaparsec (Parsec, optional, parse, sepBy, some, try, (<?>), (<|>))
 
 type Parser = Parsec Void String
