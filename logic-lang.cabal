@@ -27,6 +27,7 @@ library
   exposed-modules:
       Ast
       Clausal
+      Ground
       Parser
       Scanner
   other-modules:
