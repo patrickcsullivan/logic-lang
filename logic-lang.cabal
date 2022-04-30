@@ -30,6 +30,7 @@ library
       Ground
       Parser
       Scanner
+      Unsat
   other-modules:
       Paths_logic_lang
   hs-source-dirs:
