@@ -3,7 +3,7 @@ module Substitution (empty, singleton, insert, zip, applyToTerm, Substitution (.
 import qualified Data.List as List
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isJust)
 import Syntax.Term (Term (..))
 import Syntax.Variable (Var (..))
 import Prelude hiding (zip)
@@ -22,6 +22,10 @@ insert var trm (Substitution sub) = Substitution $ Map.insert var trm sub
 
 zip :: [Var] -> [Term] -> Substitution
 zip vars trms = Substitution $ Map.fromAscList $ List.zip vars trms
+
+-- | Returns true iff a mapping is defined for the variable in the substitution.
+isDefined :: Var -> Substitution -> Bool
+isDefined var (Substitution sub) = isJust $ var `Map.lookup` sub
 
 -- | Apply the given substitution to the term.
 applyToTerm :: Substitution -> Term -> Term
