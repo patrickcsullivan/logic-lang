@@ -3,8 +3,8 @@ module Unsat where
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Ground (groundTermPermutations)
-import Sub (Sub (..))
-import qualified Sub
+import Substitution (Substitution (..))
+import qualified Substitution
 import Syntax.Clausal (Literal (..))
 import qualified Syntax.Clausal as Clausal
 import Syntax.Constant (FnConst, ObjConst)
@@ -30,7 +30,7 @@ herbLoop ::
   Foldable t1 =>
   -- | mfn: modification function that augments the ground instances with a new
   -- instance, whatever form they're stored in
-  (t2 -> Sub -> t1 a -> t1 a) ->
+  (t2 -> Substitution -> t1 a -> t1 a) ->
   -- | tfn: satisfiability test
   (t1 a -> Bool) ->
   -- | f0:
@@ -59,7 +59,7 @@ herbLoop mfn tfn fo0 objs fns freeVars n fo tried perms = do
       let perms' = groundTermPermutations objs fns (length freeVars) n
        in herbLoop mfn tfn fo0 objs fns freeVars (n + 1) fo tried perms'
     p : ps ->
-      let fo' = mfn fo0 (freeVars `Sub.zip` p) fo
+      let fo' = mfn fo0 (freeVars `Substitution.zip` p) fo
        in do
             if not (tfn fo')
               then return (p : tried)

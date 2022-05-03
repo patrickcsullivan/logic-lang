@@ -28,7 +28,7 @@ library
       Ground
       Parser
       Scanner
-      Sub
+      Substitution
       Syntax.Clausal
       Syntax.Constant
       Syntax.Formula
