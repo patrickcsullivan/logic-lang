@@ -1,6 +1,9 @@
 module Syntax.Clausal
   ( Literal (..),
-    clausal,
+    fromFormula,
+    vars,
+    fnConsts,
+    objConsts,
   )
 where
 
@@ -9,6 +12,7 @@ import qualified Data.Set as Set
 import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
 import Syntax.Formula (Formula (..))
 import Syntax.Term (Term (..))
+import qualified Syntax.Term as Term
 import Syntax.Variable (Var (..))
 
 -- | A relation or negated relation that is applied to term arguments.
@@ -24,14 +28,32 @@ data Literal
 --
 -- The returned value represents a conjunction of a list of "clauses" where each
 -- "clause" represents a disjunction of a list of literals.
-clausal :: Formula -> [[Literal]]
-clausal =
+fromFormula :: Formula -> [[Literal]]
+fromFormula =
   removeOperators
     . distributeDisjunctions
     . removeUniversals
     . removeExistentials
     . negsIn
     . removeImpIffs
+
+-- | Return the set of variables in the literal.
+vars :: Literal -> Set Var
+vars lit = case lit of
+  LPos _ trms -> Set.unions (Term.vars <$> trms)
+  LNeg _ trms -> Set.unions (Term.vars <$> trms)
+
+-- | Return the set of object constants in the literal.
+objConsts :: Literal -> Set ObjConst
+objConsts lit = case lit of
+  LPos _ trms -> Set.unions (Term.objConsts <$> trms)
+  LNeg _ trms -> Set.unions (Term.objConsts <$> trms)
+
+-- | Return the set of function constants in the literal.
+fnConsts :: Literal -> Set FnConst
+fnConsts lit = case lit of
+  LPos _ trms -> Set.unions (Term.fnConsts <$> trms)
+  LNeg _ trms -> Set.unions (Term.fnConsts <$> trms)
 
 -- -----------------------------------------------------------------------------
 -- REMOVE IMPLICATIONS AND EQUIVALENCES
@@ -162,19 +184,12 @@ freeVars :: NegsIn -> Set Var
 freeVars fo = case fo of
   NFalse -> Set.empty
   NTrue -> Set.empty
-  NPosLit _ args -> Set.unions (termVars <$> args)
-  NNegLit _ args -> Set.unions (termVars <$> args)
+  NPosLit _ args -> Set.unions (Term.vars <$> args)
+  NNegLit _ args -> Set.unions (Term.vars <$> args)
   NAnd p q -> freeVars p `Set.union` freeVars q
   NOr p q -> freeVars p `Set.union` freeVars q
   NForAll x p -> Set.delete x (freeVars p)
   NExists x p -> Set.delete x (freeVars p)
-
--- | Return the set of variables in the term.
-termVars :: Term -> Set Var
-termVars trm = case trm of
-  TVar var -> Set.singleton var
-  TObj oc -> Set.empty
-  TFn _ args -> Set.unions (termVars <$> args)
 
 -- | Substitute the given term for the specified free variable in the formula.
 -- Bound varibles in the formula are renamed as needed to avoid clashing with
@@ -214,14 +229,14 @@ substQ targetVar subTrm mkQuant x p =
     then
       let -- Determine if substituting the new term in for the target variable
           -- would introduce a term that contains the bound variable.
-          isClash = (x `Set.member` termVars subTrm)
+          isClash = (x `Set.member` Term.vars subTrm)
           -- Come up with a new name for the bound variable that doesn't clash
           -- with any free variables in the quantifer scope or any variables in
           -- the new term.
           x' =
             if isClash
               then
-                let avoidVars = free `Set.union` termVars subTrm
+                let avoidVars = free `Set.union` Term.vars subTrm
                  in Var $ variant (varName x) (Set.map varName avoidVars)
               else x
           -- Replace any instances of the bound variable x to x' before
@@ -232,6 +247,8 @@ substQ targetVar subTrm mkQuant x p =
     else mkQuant x p
   where
     free = x `Set.delete` freeVars p
+
+-- TODO: Use Substitution.applyToTerm instead.
 
 -- | Substitute the given term for the specified free variable in the term.
 termSubst :: Var -> Term -> Term -> Term
