@@ -138,18 +138,16 @@ groundTermPermutationsSpec =
 unifySpec =
   describe "Unification.unify" $ do
     it "unifies { a = a }" $ do
-      unify [(pTrm "a", pTrm "a")] `shouldBe` Just Substitution.empty
+      unify [(parseTerm "a", parseTerm "a")] `shouldBe` Just Substitution.empty
     it "fails to unify { a = b }" $ do
-      unify [(pTrm "a", pTrm "b")] `shouldBe` Nothing
+      unify [(parseTerm "a", parseTerm "b")] `shouldBe` Nothing
     it "unifies { f(g(X),X) = f(Y,a) }" $ do
-      unify [(pTrm "f(g(X),X)", pTrm "f(Y,a)")]
+      unify [(parseTerm "f(g(X),X)", parseTerm "f(Y,a)")]
         `shouldBe` Just
           ( Substitution.fromList
-              [ (Var "X", pTrm "a"),
-                (Var "Y", pTrm "g(a)")
+              [ (Var "X", parseTerm "a"),
+                (Var "Y", parseTerm "g(a)")
               ]
           )
     it "fails to unify { X = f(X) }" $ do
-      unify [(pTrm "X", pTrm "f(X)")] `shouldBe` Nothing
-
-pTrm = parseTerm
+      unify [(parseTerm "X", parseTerm "f(X)")] `shouldBe` Nothing
