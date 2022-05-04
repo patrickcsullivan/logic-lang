@@ -1,28 +1,32 @@
 import Control.Exception (evaluate)
 import Ground (groundTermPermutations, groundTerms)
 import qualified Ground
-import Parser (parse')
-import Syntax.Clausal (Literal (..), clausal)
+import Parser (parseFormula, parseTerm)
+import Substitution (Substitution (Substitution))
+import qualified Substitution
+import Syntax.Clausal (Literal (..), fromFormula)
 import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
 import Syntax.Formula (Formula (..))
 import Syntax.Term (Term (..))
 import Syntax.Variable (Var (..))
 import Test.Hspec (context, describe, hspec, it, pending, shouldBe)
+import Unification (unify)
 
 main :: IO ()
 main = hspec $ do
   formulaPSpec
-  clausalSpec
+  fromFormulaSpec
   groundTermsSpec
   groundTermPermutationsSpec
+  unifySpec
 
 formulaPSpec =
   describe "Parser.formulaP" $ do
     it "works" $ do
       pending
 
-clausalSpec =
-  describe "Clausal.clausal" $ do
+fromFormulaSpec =
+  describe "Clausal.fromFormula" $ do
     let fo1 = "exists Y. X < Y ==> forall U. exists V. X * U < Y * V"
     it ("transforms " ++ show fo1) $ do
       let expected =
@@ -38,7 +42,7 @@ clausalSpec =
                   ]
               ]
             ]
-      clausal (parse' fo1) `shouldBe` expected
+      fromFormula (parseFormula fo1) `shouldBe` expected
     let fo2 = "forall X. p(X) ==> (exists Y Z. q(Y) or ~(exists Z. p(Z) and q(Z)))"
     it ("transforms " ++ show fo2) $ do
       let expected =
@@ -48,7 +52,7 @@ clausalSpec =
                 LNeg (RltnConst "q" 1) [TVar (Var "Z")]
               ]
             ]
-      clausal (parse' fo2) `shouldBe` expected
+      fromFormula (parseFormula fo2) `shouldBe` expected
     let fo3 = "exists X Y. p(X, Y) and q(X, Y)"
     it ("transforms " ++ show fo3) $ do
       let expected =
@@ -57,7 +61,7 @@ clausalSpec =
               [ LPos (RltnConst "q" 2) [TObj (ObjConst "c_X"), TObj (ObjConst "c_Y")]
               ]
             ]
-      clausal (parse' fo3) `shouldBe` expected
+      fromFormula (parseFormula fo3) `shouldBe` expected
 
 groundTermsSpec =
   describe "Ground.groundTerms" $ do
@@ -130,3 +134,22 @@ groundTermPermutationsSpec =
         `shouldBe` [ [TFn (FnConst {fnConstName = "f", fnConstArity = 1}) [TFn (FnConst {fnConstName = "f", fnConstArity = 1}) [TObj (ObjConst {objConstName = "c"})]]],
                      [TFn (FnConst {fnConstName = "f", fnConstArity = 1}) [TFn (FnConst {fnConstName = "f", fnConstArity = 1}) [TObj (ObjConst {objConstName = "d"})]]]
                    ]
+
+unifySpec =
+  describe "Unification.unify" $ do
+    it "unifies { a = a }" $ do
+      unify [(pTrm "a", pTrm "a")] `shouldBe` Just Substitution.empty
+    it "fails to unify { a = b }" $ do
+      unify [(pTrm "a", pTrm "b")] `shouldBe` Nothing
+    it "unifies { f(g(X),X) = f(Y,a) }" $ do
+      unify [(pTrm "f(g(X),X)", pTrm "f(Y,a)")]
+        `shouldBe` Just
+          ( Substitution.fromList
+              [ (Var "X", pTrm "a"),
+                (Var "Y", pTrm "g(a)")
+              ]
+          )
+    it "fails to unify { X = f(X) }" $ do
+      unify [(pTrm "X", pTrm "f(X)")] `shouldBe` Nothing
+
+pTrm = parseTerm

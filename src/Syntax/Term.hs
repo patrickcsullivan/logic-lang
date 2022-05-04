@@ -6,10 +6,11 @@ module Syntax.Term
   )
 where
 
+import Data.List (intercalate)
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Syntax.Constant (FnConst, ObjConst)
-import Syntax.Variable (Var)
+import Syntax.Constant (FnConst (..), ObjConst (..))
+import Syntax.Variable (Var (..))
 
 -- | A first-order term which is intended to denote an "object" in the domain
 -- being reasoned about. A term can be built up from "object"-denoting variables
@@ -18,7 +19,13 @@ data Term
   = TVar Var
   | TObj ObjConst
   | TFn FnConst [Term]
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord)
+
+instance Show Term where
+  show trm = case trm of
+    TVar var -> show var
+    TObj objConst -> show objConst
+    TFn (FnConst fnName _) args -> fnName ++ "(" ++ intercalate ", " (show <$> args) ++ ")"
 
 -- | Return the set of variables in the term.
 vars :: Term -> Set Var

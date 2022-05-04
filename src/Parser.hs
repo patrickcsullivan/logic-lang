@@ -1,4 +1,4 @@
-module Parser (formulaP, parse') where
+module Parser (formulaP, parseFormula, parseTerm) where
 
 import Control.Applicative (liftA2, liftA3)
 import Control.Monad.Combinators.Expr (Operator (InfixL, InfixR, Prefix), makeExprParser)
@@ -15,10 +15,17 @@ type Parser = Parsec Void String
 
 -- | Temporary function for running the formula parser and unwrapping the
 -- successful result.
-parse' :: String -> Formula
-parse' s = case parse formulaP "" s of
+parseFormula :: String -> Formula
+parseFormula s = case parse formulaP "" s of
   Left _ -> undefined
   Right f -> f
+
+-- | Temporary function for running the term parser and unwrapping the
+-- successful result.
+parseTerm :: String -> Term
+parseTerm s = case parse termP "" s of
+  Left _ -> undefined
+  Right t -> t
 
 formulaP :: Parser Formula
 formulaP = makeExprParser formulaCaseP formulaOperators
