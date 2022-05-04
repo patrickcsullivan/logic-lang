@@ -43,6 +43,7 @@ library
   build-depends:
       base >=4.7 && <5
     , containers
+    , haskeline
     , megaparsec
     , monad-loops
     , parser-combinators
@@ -52,6 +53,7 @@ library
 executable logic-lang-exe
   main-is: Main.hs
   other-modules:
+      Repl
       Paths_logic_lang
   hs-source-dirs:
       app
@@ -59,6 +61,7 @@ executable logic-lang-exe
   build-depends:
       base >=4.7 && <5
     , containers
+    , haskeline
     , logic-lang
     , megaparsec
     , monad-loops
@@ -77,6 +80,7 @@ test-suite logic-lang-test
   build-depends:
       base >=4.7 && <5
     , containers
+    , haskeline
     , hspec
     , logic-lang
     , megaparsec

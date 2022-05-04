@@ -27,7 +27,7 @@ formulaPSpec =
 
 fromFormulaSpec =
   describe "Clausal.fromFormula" $ do
-    let fo1 = "exists Y. X < Y ==> forall U. exists V. X * U < Y * V"
+    let fo1 = "exists Y. X < Y ==> forall U. exists V. X * U < Y * V;"
     it ("transforms " ++ show fo1) $ do
       let expected =
             [ [ LNeg
@@ -43,7 +43,7 @@ fromFormulaSpec =
               ]
             ]
       fromFormula (parseFormula fo1) `shouldBe` expected
-    let fo2 = "forall X. p(X) ==> (exists Y Z. q(Y) or ~(exists Z. p(Z) and q(Z)))"
+    let fo2 = "forall X. p(X) ==> (exists Y Z. q(Y) or ~(exists Z. p(Z) and q(Z)));"
     it ("transforms " ++ show fo2) $ do
       let expected =
             [ [ LNeg (RltnConst "p" 1) [TVar (Var "X")],
@@ -53,7 +53,7 @@ fromFormulaSpec =
               ]
             ]
       fromFormula (parseFormula fo2) `shouldBe` expected
-    let fo3 = "exists X Y. p(X, Y) and q(X, Y)"
+    let fo3 = "exists X Y. p(X, Y) and q(X, Y);"
     it ("transforms " ++ show fo3) $ do
       let expected =
             [ [ LPos (RltnConst "p" 2) [TObj (ObjConst "c_X"), TObj (ObjConst "c_Y")]

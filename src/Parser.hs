@@ -1,6 +1,13 @@
-module Parser (formulaP, parseFormula, parseTerm) where
+module Parser
+  ( formulasFileP,
+    formulaReplP,
+    formulaP,
+    parseFormula,
+    parseTerm,
+  )
+where
 
-import Control.Applicative (liftA2, liftA3)
+import Control.Applicative (Alternative (many), liftA2, liftA3)
 import Control.Monad.Combinators.Expr (Operator (InfixL, InfixR, Prefix), makeExprParser)
 import Data.Maybe (fromMaybe)
 import Data.Void (Void)
@@ -9,15 +16,16 @@ import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
 import Syntax.Formula (Formula (..))
 import Syntax.Term (Term (..))
 import Syntax.Variable (Var (..))
-import Text.Megaparsec (Parsec, optional, parse, sepBy, some, try, (<?>), (<|>))
+import Text.Megaparsec (MonadParsec (eof), Parsec, between, errorBundlePretty, optional, parse, sepBy, some, try, (<?>), (<|>))
+import Text.Megaparsec.Char (eol, newline)
 
 type Parser = Parsec Void String
 
 -- | Temporary function for running the formula parser and unwrapping the
 -- successful result.
 parseFormula :: String -> Formula
-parseFormula s = case parse formulaP "" s of
-  Left _ -> undefined
+parseFormula s = case parse topFormulaP "" s of
+  Left e -> undefined
   Right f -> f
 
 -- | Temporary function for running the term parser and unwrapping the
@@ -26,6 +34,21 @@ parseTerm :: String -> Term
 parseTerm s = case parse termP "" s of
   Left _ -> undefined
   Right t -> t
+
+formulasFileP :: Parser [Formula]
+formulasFileP = do
+  fos <- many topFormulaP
+  eof
+  return fos
+
+formulaReplP :: Parser Formula
+formulaReplP = do
+  fo <- topFormulaP
+  eof
+  return fo
+
+topFormulaP :: Parser Formula
+topFormulaP = between Scanner.spaceConsumer Scanner.semi formulaP
 
 formulaP :: Parser Formula
 formulaP = makeExprParser formulaCaseP formulaOperators
