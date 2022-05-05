@@ -1,9 +1,8 @@
-import Control.Exception (evaluate)
 import Ground (groundTermPermutations, groundTerms)
 import Parser (parseFormula, parseTerm)
 import Substitution (Sub (..))
 import qualified Substitution as Sub
-import Syntax.Clause (fromFormula)
+import Syntax.Clause.Transform (fromFormula)
 import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
 import Syntax.Formula (Formula (..))
 import Syntax.Literal (Literal (..))

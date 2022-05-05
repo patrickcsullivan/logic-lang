@@ -31,6 +31,7 @@ library
       Scanner
       Substitution
       Syntax.Clause
+      Syntax.Clause.Transform
       Syntax.Constant
       Syntax.Formula
       Syntax.Literal
