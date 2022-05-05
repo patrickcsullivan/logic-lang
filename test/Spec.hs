@@ -1,6 +1,5 @@
 import Control.Exception (evaluate)
 import Ground (groundTermPermutations, groundTerms)
-import qualified Ground
 import Parser (parseFormula, parseTerm)
 import Substitution (Sub (..))
 import qualified Substitution as Sub
