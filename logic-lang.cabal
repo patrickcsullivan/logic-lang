@@ -30,9 +30,10 @@ library
       Resolution
       Scanner
       Substitution
-      Syntax.Clausal
+      Syntax.Clause
       Syntax.Constant
       Syntax.Formula
+      Syntax.Literal
       Syntax.Term
       Syntax.Variable
       Unification

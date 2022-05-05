@@ -1,9 +1,7 @@
-module Syntax.Clausal
-  ( Literal (..),
+module Syntax.Clause
+  ( Clause,
     fromFormula,
     vars,
-    fnConsts,
-    objConsts,
   )
 where
 
@@ -11,24 +9,21 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
 import Syntax.Formula (Formula (..))
+import Syntax.Literal (Literal (..))
+import qualified Syntax.Literal as Literal
 import Syntax.Term (Term (..))
 import qualified Syntax.Term as Term
 import Syntax.Variable (Var (..))
 
--- | A relation or negated relation that is applied to term arguments.
-data Literal
-  = -- | Positive literal.
-    LPos RltnConst [Term]
-  | -- | Negative literal.
-    LNeg RltnConst [Term]
-  deriving (Eq, Show)
+-- | A disjunction of literals.
+type Clause = [Literal]
 
 -- | Transform the propositional formula into its clausal form. The clausal form
 -- is equisatisfiable with the original formula.
 --
--- The returned value represents a conjunction of a list of "clauses" where each
--- "clause" represents a disjunction of a list of literals.
-fromFormula :: Formula -> [[Literal]]
+-- The returned value represents a conjunction clauses where each clause
+-- represents a disjunction of literals.
+fromFormula :: Formula -> [Clause]
 fromFormula =
   removeOperators
     . distributeDisjunctions
@@ -37,23 +32,9 @@ fromFormula =
     . negsIn
     . removeImpIffs
 
--- | Return the set of variables in the literal.
-vars :: Literal -> Set Var
-vars lit = case lit of
-  LPos _ trms -> Set.unions (Term.vars <$> trms)
-  LNeg _ trms -> Set.unions (Term.vars <$> trms)
-
--- | Return the set of object constants in the literal.
-objConsts :: Literal -> Set ObjConst
-objConsts lit = case lit of
-  LPos _ trms -> Set.unions (Term.objConsts <$> trms)
-  LNeg _ trms -> Set.unions (Term.objConsts <$> trms)
-
--- | Return the set of function constants in the literal.
-fnConsts :: Literal -> Set FnConst
-fnConsts lit = case lit of
-  LPos _ trms -> Set.unions (Term.fnConsts <$> trms)
-  LNeg _ trms -> Set.unions (Term.fnConsts <$> trms)
+-- | Return the set of variables in the clause.
+vars :: Clause -> Set Var
+vars cl = Set.unions (Literal.vars <$> cl)
 
 -- -----------------------------------------------------------------------------
 -- REMOVE IMPLICATIONS AND EQUIVALENCES
@@ -372,7 +353,7 @@ distributeRightDisj' pLeft pRight q =
 -- -----------------------------------------------------------------------------
 -- REMOVE OPERATORS TO CREATE CLAUSES
 
-removeOperators :: CnfConjunction -> [[Literal]]
+removeOperators :: CnfConjunction -> [Clause]
 removeOperators conj = case conj of
   CAnd p q -> removeOperators p ++ removeOperators q
   CDisj disj ->
@@ -380,7 +361,7 @@ removeOperators conj = case conj of
       Just clause -> [clause]
       Nothing -> []
 
-removeOrs :: CnfDisjunction -> Maybe [Literal]
+removeOrs :: CnfDisjunction -> Maybe Clause
 removeOrs disj = case disj of
   CFalse -> Just [] -- Unsatisfiable clause.
   CTrue -> Nothing -- Clause would be a tautology so we omit it.

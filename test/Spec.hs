@@ -4,9 +4,10 @@ import qualified Ground
 import Parser (parseFormula, parseTerm)
 import Substitution (Substitution (Substitution))
 import qualified Substitution
-import Syntax.Clausal (Literal (..), fromFormula)
+import Syntax.Clause (fromFormula)
 import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
 import Syntax.Formula (Formula (..))
+import Syntax.Literal (Literal (..))
 import Syntax.Term (Term (..))
 import Syntax.Variable (Var (..))
 import Test.Hspec (context, describe, hspec, it, pending, shouldBe)
@@ -26,7 +27,7 @@ formulaPSpec =
       pending
 
 fromFormulaSpec =
-  describe "Clausal.fromFormula" $ do
+  describe "Clause.fromFormula" $ do
     let fo1 = "exists Y. X < Y ==> forall U. exists V. X * U < Y * V;"
     it ("transforms " ++ show fo1) $ do
       let expected =

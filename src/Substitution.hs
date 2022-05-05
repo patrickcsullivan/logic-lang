@@ -17,7 +17,8 @@ import qualified Data.List as List
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe, isJust)
-import Syntax.Clausal (Literal (..))
+import Syntax.Clause (Clause)
+import Syntax.Literal (Literal (..))
 import Syntax.Term (Term (..))
 import Syntax.Variable (Var (..))
 import Prelude hiding (lookup, map, zip)
@@ -39,7 +40,7 @@ applyToTerm sub trm = case trm of
   TFn fnConst args -> TFn fnConst (applyToTerm sub <$> args)
 
 -- | Apply the given substitution to the clause.
-applyToClause :: Substitution -> [Literal] -> [Literal]
+applyToClause :: Substitution -> Clause -> Clause
 applyToClause sub clause = applyToLiteral sub <$> clause
 
 -- | Apply the given substitution to the literal.
