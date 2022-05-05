@@ -9,7 +9,7 @@ module Substitution
     map,
     singleton,
     zip,
-    Substitution (..),
+    Sub (..),
   )
 where
 
@@ -24,53 +24,53 @@ import Syntax.Variable (Var (..))
 import Prelude hiding (lookup, map, zip)
 
 -- | A finite mapping from variables to terms.
-newtype Substitution = Substitution {unSubstitution :: Map Var Term}
+newtype Sub = Sub {unSub :: Map Var Term}
   deriving (Eq)
 
-instance Show Substitution where
-  show (Substitution sub) = "{\n" ++ unlines lines ++ "}"
+instance Show Sub where
+  show (Sub sub) = "{\n" ++ unlines lines ++ "}"
     where
       lines = (\(var, trm) -> "  " ++ show var ++ " |-> " ++ show trm) <$> Map.toAscList sub
 
 -- | Apply the given substitution to the term.
-applyToTerm :: Substitution -> Term -> Term
+applyToTerm :: Sub -> Term -> Term
 applyToTerm sub trm = case trm of
-  TVar var -> Data.Maybe.fromMaybe trm $ Map.lookup var (unSubstitution sub)
+  TVar var -> Data.Maybe.fromMaybe trm $ Map.lookup var (unSub sub)
   TObj _ -> trm
   TFn fnConst args -> TFn fnConst (applyToTerm sub <$> args)
 
 -- | Apply the given substitution to the clause.
-applyToClause :: Substitution -> Clause -> Clause
+applyToClause :: Sub -> Clause -> Clause
 applyToClause sub clause = applyToLiteral sub <$> clause
 
 -- | Apply the given substitution to the literal.
-applyToLiteral :: Substitution -> Literal -> Literal
+applyToLiteral :: Sub -> Literal -> Literal
 applyToLiteral sub literal = case literal of
   LPos rltnConst args -> LPos rltnConst (applyToTerm sub <$> args)
   LNeg rltnConst args -> LNeg rltnConst (applyToTerm sub <$> args)
 
 -- | Return true iff the variable is defined in the substitution.
-defined :: Var -> Substitution -> Bool
+defined :: Var -> Sub -> Bool
 defined var sub = isJust $ lookup var sub
 
-empty :: Substitution
-empty = Substitution Map.empty
+empty :: Sub
+empty = Sub Map.empty
 
-fromList :: [(Var, Term)] -> Substitution
-fromList = Substitution . Map.fromList
+fromList :: [(Var, Term)] -> Sub
+fromList = Sub . Map.fromList
 
-insert :: Var -> Term -> Substitution -> Substitution
-insert var trm (Substitution sub) = Substitution $ Map.insert var trm sub
+insert :: Var -> Term -> Sub -> Sub
+insert var trm (Sub sub) = Sub $ Map.insert var trm sub
 
 -- | Look up the term associated with the given variable.
-lookup :: Var -> Substitution -> Maybe Term
-lookup var (Substitution sub) = var `Map.lookup` sub
+lookup :: Var -> Sub -> Maybe Term
+lookup var (Sub sub) = var `Map.lookup` sub
 
-singleton :: Var -> Term -> Substitution
-singleton var trm = Substitution $ Map.singleton var trm
+singleton :: Var -> Term -> Sub
+singleton var trm = Sub $ Map.singleton var trm
 
-map :: (Term -> Term) -> Substitution -> Substitution
-map f (Substitution sub) = Substitution $ Map.map f sub
+map :: (Term -> Term) -> Sub -> Sub
+map f (Sub sub) = Sub $ Map.map f sub
 
-zip :: [Var] -> [Term] -> Substitution
-zip vars trms = Substitution $ Map.fromAscList $ List.zip vars trms
+zip :: [Var] -> [Term] -> Sub
+zip vars trms = Sub $ Map.fromAscList $ List.zip vars trms

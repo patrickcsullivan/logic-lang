@@ -229,7 +229,7 @@ substQ targetVar subTrm mkQuant x p =
   where
     free = x `Set.delete` freeVars p
 
--- TODO: Use Substitution.applyToTerm instead.
+-- TODO: Use Sub.applyToTerm instead.
 
 -- | Substitute the given term for the specified free variable in the term.
 termSubst :: Var -> Term -> Term -> Term

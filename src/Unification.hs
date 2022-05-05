@@ -4,23 +4,23 @@ module Unification
 where
 
 import Control.Monad.Loops (anyM)
-import Substitution (Substitution)
-import qualified Substitution
+import Substitution (Sub)
+import qualified Substitution as Sub
 import Syntax.Constant (FnConst (..), ObjConst (..))
 import Syntax.Term (Term (..))
 import Syntax.Variable (Var)
 
-unify :: [(Term, Term)] -> Maybe Substitution
-unify eqtns = solve <$> unifyAll Substitution.empty eqtns
+unify :: [(Term, Term)] -> Maybe Sub
+unify eqtns = solve <$> unifyAll Sub.empty eqtns
 
-solve :: Substitution -> Substitution
+solve :: Sub -> Sub
 solve env =
-  let env' = Substitution.map (Substitution.applyToTerm env) env
+  let env' = Sub.map (Sub.applyToTerm env) env
    in if env' == env
         then env
         else solve env'
 
-unifyAll :: Substitution -> [(Term, Term)] -> Maybe Substitution
+unifyAll :: Sub -> [(Term, Term)] -> Maybe Sub
 unifyAll env eqtns = case eqtns of
   [] -> Just env
   e : es -> case e of
@@ -35,24 +35,24 @@ unifyAll env eqtns = case eqtns of
         then unifyAll env (zip args1 args2 ++ es)
         else Nothing
     (TVar var, trm) ->
-      case var `Substitution.lookup` env of
+      case var `Sub.lookup` env of
         Just binding -> unifyAll env ((binding, trm) : es)
         Nothing ->
           case isTrivial env var trm of
             Just True -> unifyAll env es
-            Just False -> unifyAll (Substitution.insert var trm env) es
+            Just False -> unifyAll (Sub.insert var trm env) es
             Nothing -> Nothing -- There was a cycle.
     (trm, TVar var) -> unifyAll env ((TVar var, trm) : es)
 
 -- | Check whether unification is possible and trivial, possible and
 -- non-trivial, or impossible due to a cycle.
-isTrivial :: Substitution -> Var -> Term -> Maybe Bool
+isTrivial :: Sub -> Var -> Term -> Maybe Bool
 isTrivial env x trm = case trm of
   TVar y ->
     if x == y
       then -- x and y are the same variable, so the unification is trivial
         Just True
-      else case Substitution.lookup y env of
+      else case Sub.lookup y env of
         -- x is unifying with another variable y, that's also not in the envirnoment
         Nothing -> Just False
         -- x is unifying with y, which is mapped to some term, so check that x

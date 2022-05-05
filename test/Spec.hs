@@ -2,8 +2,8 @@ import Control.Exception (evaluate)
 import Ground (groundTermPermutations, groundTerms)
 import qualified Ground
 import Parser (parseFormula, parseTerm)
-import Substitution (Substitution (Substitution))
-import qualified Substitution
+import Substitution (Sub (..))
+import qualified Substitution as Sub
 import Syntax.Clause (fromFormula)
 import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
 import Syntax.Formula (Formula (..))
@@ -139,13 +139,13 @@ groundTermPermutationsSpec =
 unifySpec =
   describe "Unification.unify" $ do
     it "unifies { a = a }" $ do
-      unify [(parseTerm "a", parseTerm "a")] `shouldBe` Just Substitution.empty
+      unify [(parseTerm "a", parseTerm "a")] `shouldBe` Just Sub.empty
     it "fails to unify { a = b }" $ do
       unify [(parseTerm "a", parseTerm "b")] `shouldBe` Nothing
     it "unifies { f(g(X),X) = f(Y,a) }" $ do
       unify [(parseTerm "f(g(X),X)", parseTerm "f(Y,a)")]
         `shouldBe` Just
-          ( Substitution.fromList
+          ( Sub.fromList
               [ (Var "X", parseTerm "a"),
                 (Var "Y", parseTerm "g(a)")
               ]
