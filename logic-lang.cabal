@@ -27,6 +27,7 @@ library
   exposed-modules:
       Ground
       Parser
+      Resolution
       Scanner
       Substitution
       Syntax.Clausal
@@ -35,7 +36,6 @@ library
       Syntax.Term
       Syntax.Variable
       Unification
-      Unsat
   other-modules:
       Paths_logic_lang
   hs-source-dirs:

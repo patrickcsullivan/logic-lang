@@ -1,5 +1,6 @@
 module Substitution
-  ( applyToTerm,
+  ( applyToClause,
+    applyToTerm,
     defined,
     empty,
     fromList,
@@ -16,6 +17,7 @@ import qualified Data.List as List
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe, isJust)
+import Syntax.Clausal (Literal (..))
 import Syntax.Term (Term (..))
 import Syntax.Variable (Var (..))
 import Prelude hiding (lookup, map, zip)
@@ -35,6 +37,16 @@ applyToTerm sub trm = case trm of
   TVar var -> Data.Maybe.fromMaybe trm $ Map.lookup var (unSubstitution sub)
   TObj _ -> trm
   TFn fnConst args -> TFn fnConst (applyToTerm sub <$> args)
+
+-- | Apply the given substitution to the clause.
+applyToClause :: Substitution -> [Literal] -> [Literal]
+applyToClause sub clause = applyToLiteral sub <$> clause
+
+-- | Apply the given substitution to the literal.
+applyToLiteral :: Substitution -> Literal -> Literal
+applyToLiteral sub literal = case literal of
+  LPos rltnConst args -> LPos rltnConst (applyToTerm sub <$> args)
+  LNeg rltnConst args -> LNeg rltnConst (applyToTerm sub <$> args)
 
 -- | Return true iff the variable is defined in the substitution.
 defined :: Var -> Substitution -> Bool
