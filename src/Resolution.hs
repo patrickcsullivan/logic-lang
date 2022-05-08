@@ -21,7 +21,7 @@ unsatLoop :: Seq Clause -> Seq Clause -> Maybe ()
 unsatLoop used unused = case unused of
   Empty -> Nothing
   c :<| cs ->
-    case Seq.elemIndexL [] cs of
+    case Seq.elemIndexL Set.empty cs of
       Just _ -> Just ()
       Nothing ->
         let used' = used |> c
@@ -49,23 +49,23 @@ resolvents ::
   Seq Clause
 resolvents c1 c2 p acc =
   -- Pick all the literals in the second clause that are complements of p.
-  let ps2 = filter (unifiable (Literal.negate p)) c2
+  let ps2 = Set.filter (unifiable (Literal.negate p)) c2
    in if null ps2
         then Empty -- No complements of p, so no resolvents can be inferred.
         else
           let -- Pick all the literals in the first clause that are unifiable with
               -- p, other than p itself.
-              ps1 = filter (\q -> q /= p && unifiable p q) c1
+              ps1 = Set.filter (\q -> q /= p && unifiable p q) c1
               -- All possible pairs of subsets of literals from the first clause
               -- that are unifiable with p and include p and non-empty subsets
               -- of literals from the second clause.
               pairs = do
                 -- Each subset of literals in the first clause that are
                 -- unifiable with p and that also include p.
-                p1Subset <- (p :) <$> subsequences ps1
+                p1Subset <- (p :) <$> subsequences (Set.toAscList ps1)
                 -- Each non-empty subset of liters in the second clause.
-                p2Subset <- filter (not . null) $ subsequences ps2
-                return (p1Subset, p2Subset)
+                p2Subset <- filter (not . null) $ subsequences $ Set.toAscList ps2
+                return (Set.fromList p1Subset, Set.fromList p2Subset)
            in foldr
                 ( \(p1Subset, p2Subset) soFar ->
                     undefined

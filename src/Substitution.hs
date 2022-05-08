@@ -17,6 +17,7 @@ import qualified Data.List as List
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe, isJust)
+import qualified Data.Set as Set
 import Syntax.Clause (Clause)
 import Syntax.Literal (Literal (..))
 import Syntax.Term (Term (..))
@@ -41,7 +42,7 @@ applyToTerm sub trm = case trm of
 
 -- | Apply the given substitution to the clause.
 applyToClause :: Sub -> Clause -> Clause
-applyToClause sub clause = applyToLiteral sub <$> clause
+applyToClause sub clause = applyToLiteral sub `Set.map` clause
 
 -- | Apply the given substitution to the literal.
 applyToLiteral :: Sub -> Literal -> Literal

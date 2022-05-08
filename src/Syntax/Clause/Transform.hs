@@ -20,7 +20,7 @@ import Syntax.Variable (Var (..))
 --
 -- The returned value represents a conjunction clauses where each clause
 -- represents a disjunction of literals.
-fromFormula :: Formula -> [Clause]
+fromFormula :: Formula -> Set Clause
 fromFormula =
   removeOperators
     . distributeDisjunctions
@@ -334,21 +334,18 @@ distributeRightDisj' pLeft pRight q =
 -- -----------------------------------------------------------------------------
 -- REMOVE OPERATORS TO CREATE CLAUSES
 
-removeOperators :: CnfConjunction -> [Clause]
+removeOperators :: CnfConjunction -> Set Clause
 removeOperators conj = case conj of
-  CAnd p q -> removeOperators p ++ removeOperators q
-  CDisj disj ->
-    case removeOrs disj of
-      Just clause -> [clause]
-      Nothing -> []
+  CAnd p q -> removeOperators p `Set.union` removeOperators q
+  CDisj disj -> maybe Set.empty Set.singleton (removeOrs disj)
 
 removeOrs :: CnfDisjunction -> Maybe Clause
 removeOrs disj = case disj of
-  CFalse -> Just [] -- Unsatisfiable clause.
+  CFalse -> Just Set.empty -- Unsatisfiable clause.
   CTrue -> Nothing -- Clause would be a tautology so we omit it.
-  CPosLit rltnConst args -> Just [LPos rltnConst args]
-  CNegLit rltnConst args -> Just [LNeg rltnConst args]
+  CPosLit rltnConst args -> Just $ Set.singleton $ LPos rltnConst args
+  CNegLit rltnConst args -> Just $ Set.singleton $ LNeg rltnConst args
   COr p q -> do
     pDisjs <- removeOrs p
     qDisjs <- removeOrs q
-    return $ pDisjs ++ qDisjs
+    return $ pDisjs `Set.union` qDisjs

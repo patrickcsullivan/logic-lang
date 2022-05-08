@@ -11,8 +11,8 @@ import qualified Syntax.Literal as Literal
 import Syntax.Variable (Var)
 
 -- | A disjunction of literals.
-type Clause = [Literal]
+type Clause = Set Literal
 
 -- | Return the set of variables in the clause.
 vars :: Clause -> Set Var
-vars cl = Set.unions (Literal.vars <$> cl)
+vars cl = Set.unions (Literal.vars `Set.map` cl)

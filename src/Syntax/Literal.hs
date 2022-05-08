@@ -21,7 +21,7 @@ data Literal
     LPos RltnConst [Term]
   | -- | Negative literal.
     LNeg RltnConst [Term]
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 -- | Return the set of function constants in the literal.
 fnConsts :: Literal -> Set FnConst
