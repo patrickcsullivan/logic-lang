@@ -9,7 +9,7 @@ import Syntax.Literal (Literal (..))
 import Syntax.Term (Term (..))
 import Syntax.Variable (Var (..))
 import Test.Hspec (context, describe, hspec, it, pending, shouldBe)
-import Unification (unify)
+import Unification (solve, unifyAllTerms)
 
 main :: IO ()
 main = hspec $ do
@@ -135,13 +135,13 @@ groundTermPermutationsSpec =
                    ]
 
 unifySpec =
-  describe "Unification.unify" $ do
+  describe "Unification.unifyAllTerms" $ do
     it "unifies { a = a }" $ do
-      unify [(parseTerm "a", parseTerm "a")] `shouldBe` Just Sub.empty
+      solve <$> unifyAllTerms Sub.empty [(parseTerm "a", parseTerm "a")] `shouldBe` Just Sub.empty
     it "fails to unify { a = b }" $ do
-      unify [(parseTerm "a", parseTerm "b")] `shouldBe` Nothing
+      solve <$> unifyAllTerms Sub.empty [(parseTerm "a", parseTerm "b")] `shouldBe` Nothing
     it "unifies { f(g(X),X) = f(Y,a) }" $ do
-      unify [(parseTerm "f(g(X),X)", parseTerm "f(Y,a)")]
+      solve <$> unifyAllTerms Sub.empty [(parseTerm "f(g(X),X)", parseTerm "f(Y,a)")]
         `shouldBe` Just
           ( Sub.fromList
               [ (Var "X", parseTerm "a"),
@@ -149,4 +149,4 @@ unifySpec =
               ]
           )
     it "fails to unify { X = f(X) }" $ do
-      unify [(parseTerm "X", parseTerm "f(X)")] `shouldBe` Nothing
+      solve <$> unifyAllTerms Sub.empty [(parseTerm "X", parseTerm "f(X)")] `shouldBe` Nothing

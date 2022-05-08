@@ -1,17 +1,22 @@
 module Unification
-  ( unify,
+  ( solve,
+    unifyAllTerms, -- Only exported for testing. TODO: Remove export and test something else.
+    unifyLiterals,
+    unifiable,
   )
 where
 
 import Control.Monad.Loops (anyM)
+import Data.Maybe (isJust)
 import Substitution (Sub)
 import qualified Substitution as Sub
-import Syntax.Constant (FnConst (..), ObjConst (..))
+import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst)
+import Syntax.Literal (Literal (..))
 import Syntax.Term (Term (..))
 import Syntax.Variable (Var)
 
-unify :: [(Term, Term)] -> Maybe Sub
-unify eqtns = solve <$> unifyAll Sub.empty eqtns
+-- unify :: [(Term, Term)] -> Maybe Sub
+-- unify eqtns = solve <$> unifyAllTerms Sub.empty eqtns
 
 solve :: Sub -> Sub
 solve env =
@@ -20,8 +25,24 @@ solve env =
         then env
         else solve env'
 
-unifyAll :: Sub -> [(Term, Term)] -> Maybe Sub
-unifyAll env eqtns = case eqtns of
+unifiable :: Literal -> Literal -> Bool
+unifiable l1 l2 = isJust $ unifyLiterals l1 l2
+
+unifyLiterals :: Literal -> Literal -> Maybe Sub
+unifyLiterals l1 l2 = case (l1, l2) of
+  (LPos _ _, LNeg _ _) -> Nothing
+  (LNeg _ _, LPos _ _) -> Nothing
+  (LPos rltnConst1 args1, LPos rltnConst2 args2) -> unifyRelations (rltnConst1, args1) (rltnConst2, args2)
+  (LNeg rltnConst1 args1, LNeg rltnConst2 args2) -> unifyRelations (rltnConst1, args1) (rltnConst2, args2)
+
+unifyRelations :: (RltnConst, [Term]) -> (RltnConst, [Term]) -> Maybe Sub
+unifyRelations (rltnConst1, args1) (rltnConst2, args2) =
+  if rltnConst1 == rltnConst2 && length args1 == length args2
+    then unifyAllTerms Sub.empty (zip args1 args2)
+    else Nothing
+
+unifyAllTerms :: Sub -> [(Term, Term)] -> Maybe Sub
+unifyAllTerms env eqtns = case eqtns of
   [] -> Just env
   e : es -> case e of
     (TObj _, TFn _ _) -> Nothing
@@ -32,17 +53,17 @@ unifyAll env eqtns = case eqtns of
         else Nothing
     (TFn fc1 args1, TFn fc2 args2) ->
       if fc1 == fc2
-        then unifyAll env (zip args1 args2 ++ es)
+        then unifyAllTerms env (zip args1 args2 ++ es)
         else Nothing
     (TVar var, trm) ->
       case var `Sub.lookup` env of
-        Just binding -> unifyAll env ((binding, trm) : es)
+        Just binding -> unifyAllTerms env ((binding, trm) : es)
         Nothing ->
           case isTrivial env var trm of
-            Just True -> unifyAll env es
-            Just False -> unifyAll (Sub.insert var trm env) es
+            Just True -> unifyAllTerms env es
+            Just False -> unifyAllTerms (Sub.insert var trm env) es
             Nothing -> Nothing -- There was a cycle.
-    (trm, TVar var) -> unifyAll env ((TVar var, trm) : es)
+    (trm, TVar var) -> unifyAllTerms env ((TVar var, trm) : es)
 
 -- | Check whether unification is possible and trivial, possible and
 -- non-trivial, or impossible due to a cycle.

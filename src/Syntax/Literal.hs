@@ -1,6 +1,7 @@
 module Syntax.Literal
   ( Literal (..),
     fnConsts,
+    negate,
     objConsts,
     vars,
   )
@@ -12,6 +13,7 @@ import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
 import Syntax.Term (Term (..))
 import qualified Syntax.Term as Term
 import Syntax.Variable (Var (..))
+import Prelude hiding (negate)
 
 -- | A relation or negated relation that is applied to term arguments.
 data Literal
@@ -26,6 +28,12 @@ fnConsts :: Literal -> Set FnConst
 fnConsts lit = case lit of
   LPos _ trms -> Set.unions (Term.fnConsts <$> trms)
   LNeg _ trms -> Set.unions (Term.fnConsts <$> trms)
+
+-- | Negate the literal.
+negate :: Literal -> Literal
+negate lit = case lit of
+  LPos rltnConst args -> LNeg rltnConst args
+  LNeg rltnConst args -> LPos rltnConst args
 
 -- | Return the set of object constants in the literal.
 objConsts :: Literal -> Set ObjConst
