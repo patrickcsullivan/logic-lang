@@ -1,7 +1,7 @@
 module Unification
-  ( solve,
+  ( literalsMgu,
+    solve,
     unifyAllTerms, -- Only exported for testing. TODO: Remove export and test something else.
-    unifyLiterals,
     unifiable,
   )
 where
@@ -18,6 +18,17 @@ import Syntax.Variable (Var)
 -- unify :: [(Term, Term)] -> Maybe Sub
 -- unify eqtns = solve <$> unifyAllTerms Sub.empty eqtns
 
+-- | Find the most general unifier for the set of literals.
+literalsMgu :: [Literal] -> Maybe Sub
+literalsMgu = mguWithEnv Sub.empty
+
+mguWithEnv :: Sub -> [Literal] -> Maybe Sub
+mguWithEnv env lits = case lits of
+  a : b : rest -> do
+    env' <- unifyLiterals env a b
+    mguWithEnv env' (b : rest)
+  _ -> Just $ solve env
+
 solve :: Sub -> Sub
 solve env =
   let env' = Sub.map (Sub.applyToTerm env) env
@@ -26,19 +37,19 @@ solve env =
         else solve env'
 
 unifiable :: Literal -> Literal -> Bool
-unifiable l1 l2 = isJust $ unifyLiterals l1 l2
+unifiable l1 l2 = isJust $ unifyLiterals Sub.empty l1 l2
 
-unifyLiterals :: Literal -> Literal -> Maybe Sub
-unifyLiterals l1 l2 = case (l1, l2) of
+unifyLiterals :: Sub -> Literal -> Literal -> Maybe Sub
+unifyLiterals env l1 l2 = case (l1, l2) of
   (LPos _ _, LNeg _ _) -> Nothing
   (LNeg _ _, LPos _ _) -> Nothing
-  (LPos rltnConst1 args1, LPos rltnConst2 args2) -> unifyRelations (rltnConst1, args1) (rltnConst2, args2)
-  (LNeg rltnConst1 args1, LNeg rltnConst2 args2) -> unifyRelations (rltnConst1, args1) (rltnConst2, args2)
+  (LPos rltnConst1 args1, LPos rltnConst2 args2) -> unifyRelations env (rltnConst1, args1) (rltnConst2, args2)
+  (LNeg rltnConst1 args1, LNeg rltnConst2 args2) -> unifyRelations env (rltnConst1, args1) (rltnConst2, args2)
 
-unifyRelations :: (RltnConst, [Term]) -> (RltnConst, [Term]) -> Maybe Sub
-unifyRelations (rltnConst1, args1) (rltnConst2, args2) =
+unifyRelations :: Sub -> (RltnConst, [Term]) -> (RltnConst, [Term]) -> Maybe Sub
+unifyRelations env (rltnConst1, args1) (rltnConst2, args2) =
   if rltnConst1 == rltnConst2 && length args1 == length args2
-    then unifyAllTerms Sub.empty (zip args1 args2)
+    then unifyAllTerms env (zip args1 args2)
     else Nothing
 
 unifyAllTerms :: Sub -> [(Term, Term)] -> Maybe Sub
