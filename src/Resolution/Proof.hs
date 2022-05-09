@@ -9,7 +9,11 @@ import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
 import Data.Set (Set)
 import qualified Data.Set as Set
+import qualified Substitution as Sub
 import Syntax.Clause (Clause)
+import qualified Syntax.Clause as Clause
+import Syntax.Term (Term (..))
+import Syntax.Variable (Var (..))
 
 data IndexedProof = IPremise | IResolvent Int Int
 
@@ -19,13 +23,15 @@ prettyPrint inferred (conclClause, conclProof) =
       steps =
         ( \i ->
             let (c, prf) = Seq.index inferred i
-             in (i, c, prf)
+             in (i, renameVars c, prf)
         )
           <$> indexes
       proofs = conclProof : ((\(_, _, p) -> p) <$> steps)
       iColWidth = indexColWidth indexes
       pColWidth = proofColWidth proofs
-      lines = (prettyStep iColWidth pColWidth <$> steps) ++ [prettyConcl iColWidth pColWidth (conclClause, conclProof)]
+      lines =
+        (prettyStep iColWidth pColWidth <$> steps)
+          ++ [prettyConcl iColWidth pColWidth (renameVars conclClause, conclProof)]
    in do
         putStrLn ""
         sequence_ $ putStrLn <$> lines
@@ -81,3 +87,10 @@ padRightSpaces :: Int -> String -> String
 padRightSpaces totalWidth s =
   let padWidth = max 0 $ totalWidth - length s
    in s ++ replicate padWidth ' '
+
+renameVars :: Clause -> Clause
+renameVars clause =
+  let vs = Set.toAscList $ Clause.vars clause
+      vs' = (\(i, _) -> TVar $ Var $ "X" ++ show i) <$> zip [0 ..] vs
+      sub = Sub.zip vs vs'
+   in Sub.applyToClause sub clause
