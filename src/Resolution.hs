@@ -3,7 +3,6 @@
 module Resolution
   ( IndexedProof (..),
     SearchState (..),
-    initState,
     resolutionLoop,
     unsatisfiable,
   )
@@ -15,6 +14,8 @@ import qualified Data.Sequence as Seq
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Resolution.Proof (IndexedProof (..))
+import Resolution.SearchState (SearchState (..))
+import qualified Resolution.SearchState as SearchState
 import Substitution (Sub)
 import qualified Substitution as Sub
 import Syntax.Clause (Clause)
@@ -25,18 +26,8 @@ import Syntax.Term (Term (..))
 import Syntax.Variable (Var (..))
 import Unification (literalsMgu, unifiable)
 
-data SearchState = SearchState
-  { used :: Seq (Int, Clause, IndexedProof),
-    unused :: Seq (Int, Clause, IndexedProof)
-  }
-
-initState :: Set Clause -> SearchState
-initState clauses =
-  let premises = Seq.mapWithIndex (\i c -> (i, c, IPremise)) $ Seq.fromList $ Set.toAscList clauses
-   in SearchState Empty premises
-
 unsatisfiable :: Set Clause -> (SearchState, [(Clause, IndexedProof)])
-unsatisfiable clauses = resolutionLoop Set.null (initState clauses)
+unsatisfiable clauses = resolutionLoop Set.null (SearchState.initState clauses)
 
 -- | Resolve the first "unused" clause with each "used" clause, generating new
 -- "unused" clauses. Repeat until one of the "unsued" clauses passes the search

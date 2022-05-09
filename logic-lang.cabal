@@ -29,6 +29,7 @@ library
       Parser
       Resolution
       Resolution.Proof
+      Resolution.SearchState
       Scanner
       Substitution
       Syntax.Clause
