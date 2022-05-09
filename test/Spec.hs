@@ -146,6 +146,9 @@ unifySpec =
       solve <$> unifyAllTerms Sub.empty [(parseTerm "a", parseTerm "a")] `shouldBe` Just Sub.empty
     it "fails to unify { a = b }" $ do
       solve <$> unifyAllTerms Sub.empty [(parseTerm "a", parseTerm "b")] `shouldBe` Nothing
+    it "unifies { f(c,X) = f(c,d) }" $ do
+      solve <$> unifyAllTerms Sub.empty [(parseTerm "f(c,X)", parseTerm "f(c,d)")]
+        `shouldBe` Just (Sub.singleton (Var "X") (parseTerm "d"))
     it "unifies { f(g(X),X) = f(Y,a) }" $ do
       solve <$> unifyAllTerms Sub.empty [(parseTerm "f(g(X),X)", parseTerm "f(Y,a)")]
         `shouldBe` Just

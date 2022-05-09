@@ -60,7 +60,7 @@ unifyAllTerms env eqtns = case eqtns of
     (TFn _ _, TObj _) -> Nothing
     (TObj oc1, TObj oc2) ->
       if oc1 == oc2
-        then Just env
+        then unifyAllTerms env es
         else Nothing
     (TFn fc1 args1, TFn fc2 args2) ->
       if fc1 == fc2
