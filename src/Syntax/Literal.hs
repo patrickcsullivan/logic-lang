@@ -7,6 +7,7 @@ module Syntax.Literal
   )
 where
 
+import Data.List (intercalate)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Syntax.Constant (FnConst (..), ObjConst (..), RltnConst (..))
@@ -21,7 +22,14 @@ data Literal
     LPos RltnConst [Term]
   | -- | Negative literal.
     LNeg RltnConst [Term]
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord)
+
+instance Show Literal where
+  show literal = case literal of
+    LPos rltnConst args -> showRltn rltnConst args
+    LNeg rltnConst args -> "~" ++ showRltn rltnConst args
+    where
+      showRltn (RltnConst rltnName _) args = rltnName ++ "(" ++ intercalate ", " (show <$> args) ++ ")"
 
 -- | Return the set of function constants in the literal.
 fnConsts :: Literal -> Set FnConst

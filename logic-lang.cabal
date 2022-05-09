@@ -28,6 +28,7 @@ library
       Ground
       Parser
       Resolution
+      Resolution.Proof
       Scanner
       Substitution
       Syntax.Clause

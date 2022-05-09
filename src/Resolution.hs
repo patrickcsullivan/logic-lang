@@ -1,5 +1,10 @@
+{-# LANGUAGE TupleSections #-}
+
 module Resolution
-  ( resolutionLoop,
+  ( IndexedProof (..),
+    SearchState (..),
+    initState,
+    resolutionLoop,
     unsatisfiable,
   )
 where
@@ -9,6 +14,7 @@ import Data.Sequence (Seq (Empty, (:<|)), (><), (|>))
 import qualified Data.Sequence as Seq
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Resolution.Proof (IndexedProof (..))
 import Substitution (Sub)
 import qualified Substitution as Sub
 import Syntax.Clause (Clause)
@@ -19,29 +25,59 @@ import Syntax.Term (Term (..))
 import Syntax.Variable (Var (..))
 import Unification (literalsMgu, unifiable)
 
-unsatisfiable :: Seq Clause -> Maybe ()
-unsatisfiable = resolutionLoop Set.null Empty
+data SearchState = SearchState
+  { used :: Seq (Int, Clause, IndexedProof),
+    unused :: Seq (Int, Clause, IndexedProof)
+  }
+
+initState :: Set Clause -> SearchState
+initState clauses =
+  let premises = Seq.mapWithIndex (\i c -> (i, c, IPremise)) $ Seq.fromList $ Set.toAscList clauses
+   in SearchState Empty premises
+
+unsatisfiable :: Set Clause -> (SearchState, [(Clause, IndexedProof)])
+unsatisfiable clauses = resolutionLoop Set.null (initState clauses)
 
 -- | Resolve the first "unused" clause with each "used" clause, generating new
 -- "unused" clauses. Repeat until one of the "unsued" clauses passes the search
 -- function or until all possible resolutions have been exhausted.
-resolutionLoop :: (Clause -> Bool) -> Seq Clause -> Seq Clause -> Maybe ()
-resolutionLoop f used unused = case unused of
-  Empty -> Nothing
+resolutionLoop :: (Clause -> Bool) -> SearchState -> (SearchState, [(Clause, IndexedProof)])
+resolutionLoop f (SearchState used unused) = case unused of
+  Empty -> (SearchState used unused, [])
   c :<| cs ->
-    case Seq.findIndexL f cs of
-      Just _ -> Just ()
-      Nothing ->
-        let used' = used |> c
-            news = resolveClauses c =<< used'
-         in resolutionLoop f used' (cs >< news)
+    let used' = used |> c
+        news = resolveClauses c =<< used'
+        next = length used' + length cs
+        newsWithIndex = Seq.mapWithIndex (\i (c, p) -> (i + next, c, p)) news
+        unused' = cs >< newsWithIndex
+        nextState = SearchState used' unused'
+     in case Seq.findIndicesL (f . fst) news of
+          [] -> resolutionLoop f nextState
+          goalIndices ->
+            let goals = Seq.index news <$> goalIndices
+                state = SearchState used' unused'
+             in (nextState, goals)
+
+-- data Proof
+--   = Premise Clause
+--   | Resolvent Clause Proof Proof
+--   deriving (Show)
+
+-- buildProof :: Seq (Clause, IndexedProof) -> (Clause, IndexedProof) -> Proof
+-- buildProof infered (goalClause, goalProof) = case goalProof of
+--   IPremise -> Premise goalClause
+--   IResolvent premiseIndex1 premiseIndex2 ->
+--     let premiseProof1 = buildProof infered (infered `Seq.index` premiseIndex1)
+--         premiseProof2 = buildProof infered (infered `Seq.index` premiseIndex2)
+--      in Resolvent goalClause premiseProof1 premiseProof2
 
 -- | Generate all possible resolvent clauses from the two premise clauses.
-resolveClauses :: Clause -> Clause -> Seq Clause
-resolveClauses c1 c2 =
-  let c1' = renameVars "X" c1
-      c2' = renameVars "Y" c2
-   in foldr (resolvents c1' c2') Empty c1'
+resolveClauses :: (Int, Clause, IndexedProof) -> (Int, Clause, IndexedProof) -> Seq (Clause, IndexedProof)
+resolveClauses (index1, clause1, _) (index2, clause2, _) =
+  let clause1' = renameVars "X" clause1
+      clause2' = renameVars "Y" clause2
+      rs = foldr (resolvents clause1' clause2') Empty clause1'
+   in (,IResolvent index1 index2) <$> rs
 
 -- | Return all resolvents that can be inferred by unifying the given literal
 -- from the first clause with complementary literals in the second clause.
