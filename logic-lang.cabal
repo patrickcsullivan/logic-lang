@@ -58,6 +58,8 @@ executable logic-lang-exe
   main-is: Main.hs
   other-modules:
       Repl
+      Repl.Command
+      Repl.LastResult
       Paths_logic_lang
   hs-source-dirs:
       app

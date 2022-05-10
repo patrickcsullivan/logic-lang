@@ -32,9 +32,7 @@ prettyPrint inferred (conclClause, conclProof) =
       lines =
         (prettyStep iColWidth pColWidth <$> steps)
           ++ [prettyConcl iColWidth pColWidth (renameVars conclClause, conclProof)]
-   in do
-        putStrLn ""
-        sequence_ $ putStrLn <$> lines
+   in sequence_ $ putStrLn <$> lines
 
 prettyStep :: Int -> Int -> (Int, Clause, IndexedProof) -> String
 prettyStep iColWidth pColWidth (index, clause, proof) =

@@ -2,7 +2,6 @@
 
 module Resolution
   ( IndexedProof (..),
-    SearchState (..),
     resolutionLoop,
     unsatisfiable,
   )
@@ -26,8 +25,11 @@ import Syntax.Term (Term (..))
 import Syntax.Variable (Var (..))
 import Unification (literalsMgu, unifiable)
 
-unsatisfiable :: Set Clause -> (SearchState, [(Clause, IndexedProof)])
-unsatisfiable clauses = resolutionLoop Set.null (SearchState.initState clauses)
+unsatisfiable :: Set Clause -> (SearchState, Maybe (Clause, IndexedProof))
+unsatisfiable clauses =
+  case resolutionLoop Set.null (SearchState.initState clauses) of
+    (searchState, (clause, proof) : _) -> (searchState, Just (clause, proof))
+    (searchState, []) -> (searchState, Nothing)
 
 -- | Resolve the first "unused" clause with each "used" clause, generating new
 -- "unused" clauses. Repeat until one of the "unsued" clauses passes the search
