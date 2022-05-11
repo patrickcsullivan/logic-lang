@@ -1,9 +1,11 @@
 module Resolution.Proof
   ( IndexedProof (..),
     prettyPrint,
+    prettyPrintAll,
   )
 where
 
+import Data.Foldable (toList)
 import Data.List (intercalate)
 import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
@@ -15,7 +17,14 @@ import qualified Syntax.Clause as Clause
 import Syntax.Term (Term (..))
 import Syntax.Variable (Var (..))
 
-data IndexedProof = IPremise | IResolvent Int Int
+data IndexedProof = IPremise | IResolvent Int Int deriving (Show)
+
+prettyPrintAll :: Seq (Int, Clause, IndexedProof) -> String
+prettyPrintAll inferred =
+  let iColWidth = indexColWidth $ toList $ (\(i, _, _) -> i) <$> inferred
+      pColWidth = proofColWidth $ toList $ (\(_, _, p) -> p) <$> inferred
+      lines = prettyStep iColWidth pColWidth <$> toList inferred
+   in unlines lines
 
 prettyPrint :: Seq (Clause, IndexedProof) -> (Clause, IndexedProof) -> IO ()
 prettyPrint inferred (conclClause, conclProof) =

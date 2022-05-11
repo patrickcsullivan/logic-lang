@@ -4,7 +4,7 @@ module Repl.Command
   )
 where
 
-data Command = Quit | LastProof | LastAnswer | NextAnswer
+data Command = Quit | LastProof | LastAnswer | NextAnswer | Debug
 
 parse :: String -> Maybe Command
 parse s = case s of
@@ -16,4 +16,5 @@ parse s = case s of
   "answer" -> Just LastAnswer
   "n" -> Just NextAnswer
   "next" -> Just NextAnswer
+  "debug" -> Just Debug
   _ -> Nothing

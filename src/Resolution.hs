@@ -88,7 +88,7 @@ resolvents c1 c2 p acc =
   -- Pick all the literals in the second clause that are complements of p.
   let ps2 = Set.filter (unifiable (Literal.negate p)) c2
    in if null ps2
-        then Empty -- No complements of p, so no resolvents can be inferred.
+        then acc -- No complements of p, so no resolvents can be inferred.
         else
           let -- Pick all the literals in the first clause that are unifiable with
               -- p, other than p itself.
