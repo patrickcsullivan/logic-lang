@@ -2,6 +2,7 @@ module Resolution.Proof
   ( IndexedProof (..),
     prettyPrint,
     prettyPrintAll,
+    debugPrintClauses,
   )
 where
 
@@ -18,6 +19,11 @@ import Syntax.Term (Term (..))
 import Syntax.Variable (Var (..))
 
 data IndexedProof = IPremise | IResolvent Int Int deriving (Show)
+
+debugPrintClauses :: Set Clause -> IO ()
+debugPrintClauses cs =
+  let strs = prettyClause <$> Set.toList cs
+   in sequence_ $ putStrLn <$> strs
 
 prettyPrintAll :: Seq (Int, Clause, IndexedProof) -> String
 prettyPrintAll inferred =

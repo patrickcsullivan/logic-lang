@@ -15,19 +15,25 @@ import Syntax.Term (Term (..))
 import qualified Syntax.Term as Term
 import Syntax.Variable (Var (..))
 
--- | Transform the propositional formula into its clausal form. The clausal form
--- is equisatisfiable with the original formula.
---
--- The returned value represents a conjunction clauses where each clause
--- represents a disjunction of literals.
-fromFormula :: Formula -> Set Clause
-fromFormula =
-  removeOperators
-    . distributeDisjunctions
-    . removeUniversals
-    . removeExistentials
-    . negsIn
-    . removeImpIffs
+-- -- | Transform the propositional formula into its clausal form. The clausal form
+-- -- is equisatisfiable with the original formula.
+-- --
+-- -- The returned value represents a conjunction clauses where each clause
+-- -- represents a disjunction of literals.
+-- fromFormula :: Formula -> Set Clause
+-- fromFormula =
+--   removeOperators
+--     . distributeDisjunctions
+--     . removeUniversals
+--     . removeExistentials
+--     . negsIn
+--     . removeImpIffs
+
+fromFormula :: Set String -> Formula -> (Set String, Set Clause)
+fromFormula avoid fo =
+  let (avoid', fo') = (removeExs avoid . negsIn . removeImpIffs) fo
+      fo'' = (removeOperators . distributeDisjunctions . removeUniversals) fo'
+   in (avoid', fo'')
 
 -- -----------------------------------------------------------------------------
 -- REMOVE IMPLICATIONS AND EQUIVALENCES
